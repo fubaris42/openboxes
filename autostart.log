@@ -1,0 +1,26 @@
+[2026-10-13T13:59:10] > podman compose up -d
+[4m>>>> Executing external compose provider "C:\\Users\\fubar\\.local\\bin\\podman-compose.exe". Please see podman-compose(1) for how to disable this message. <<<<
+
+[0m393af4f0413d79edc83708d4fc8697fff6a78f9cab90deee92850b3419ec6ad8
+41096ae9913468679bb5e05bbc19f44edcaf0eae45d67fcde224ffdeda9d3a1f
+37bf5e4b18fb699b5072a151cd59bc9f6be18dbe60213fed3a3e6961e34f3068
+c94d6be35b656f0ff2d5d2afedf81585bdbc84b30d6d60cfcaee1ae653ef0433
+5660ad69092dc0441beaac324c6455cdf0dfed41b17b11db081dcc66ac79ef06
+openboxes-db
+openboxes-app
+[2026-10-13T13:59:40] > podman compose up -d
+[4m>>>> Executing external compose provider "C:\\Users\\fubar\\.local\\bin\\podman-compose.exe". Please see podman-compose(1) for how to disable this message. <<<<
+
+[0m393af4f0413d79edc83708d4fc8697fff6a78f9cab90deee92850b3419ec6ad8
+41096ae9913468679bb5e05bbc19f44edcaf0eae45d67fcde224ffdeda9d3a1f
+[2026-10-13T13:59:46] > podman compose up -d
+[4m>>>> Executing external compose provider "C:\\Users\\fubar\\.local\\bin\\podman-compose.exe". Please see podman-compose(1) for how to disable this message. <<<<
+
+[0m393af4f0413d79edc83708d4fc8697fff6a78f9cab90deee92850b3419ec6ad8
+41096ae9913468679bb5e05bbc19f44edcaf0eae45d67fcde224ffdeda9d3a1f
+[2026-10-13T14:48:45] > podman cp seed.sql openboxes-db:/tmp/seed.sql
+[2026-10-13T14:48:45] > podman exec openboxes-db sh -c "MYSQL_PWD=$MARIADB_PASSWORD mariadb -uopenboxes openboxes < /tmp/seed.sql"
+warehouses	categories	products
+3	8	23
+[2026-10-13T14:48:46] > podman restart openboxes-app
+openboxes-app
