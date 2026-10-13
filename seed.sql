@@ -1,6 +1,6 @@
--- OpenBoxes seed data: 3 warehouses, 8 categories, 23 products.
+-- OpenBoxes seed data: 3 warehouses, 8 categories, 39 products (seragam is one product per size).
 -- Safe to re-run: every row has a fixed id and is inserted with INSERT IGNORE.
--- Apply with:  openboxes-autostart.ps1 seed   /   ./openboxes-autostart.sh seed
+-- Apply with:  uv run obx.py seed
 
 SET NAMES utf8mb3;
 SET @now := NOW();
@@ -42,9 +42,28 @@ INSERT IGNORE INTO category (id, version, date_created, last_updated, name, pare
 
 -- Products -------------------------------------------------------------------
 -- Staged in a temp table so the shared columns are written once.
+-- OpenBoxes has no size variants, so every size is its own product. A "product family"
+-- ties the sizes of one garment together.
+INSERT IGNORE INTO product_group (id, version, date_created, last_updated, name, category_id) VALUES
+  ('seed-fam-seragam-p', 0, @now, @now, 'Seragam okt 2026 P', 'seed-cat-seragam'),
+  ('seed-fam-seragam-l', 0, @now, @now, 'Seragam okt 2026 L', 'seed-cat-seragam');
+
 CREATE TEMPORARY TABLE seed_product (
-  id char(38) PRIMARY KEY, product_code varchar(255), name varchar(255), category_id char(38)
+  id char(38) PRIMARY KEY, product_code varchar(255), name varchar(255), category_id char(38),
+  family_id char(38)
 ) DEFAULT CHARSET = utf8mb3;
+
+-- Seragam: one product per cut (P, L) and size, e.g. SRG-2610-P-XS "Seragam okt 2026 P (XS)"
+INSERT INTO seed_product (id, product_code, name, category_id, family_id)
+SELECT CONCAT('seed-prd-srg-', LOWER(c.cut), '-', LOWER(s.size)),
+       CONCAT('SRG-2610-', c.cut, '-', s.size),
+       CONCAT('Seragam okt 2026 ', c.cut, ' (', s.size, ')'),
+       'seed-cat-seragam', c.family_id
+FROM (SELECT 'P' AS cut, 'seed-fam-seragam-p' AS family_id
+      UNION ALL SELECT 'L', 'seed-fam-seragam-l') c
+CROSS JOIN (SELECT 'XS' AS size UNION ALL SELECT 'S' UNION ALL SELECT 'M' UNION ALL SELECT 'L'
+            UNION ALL SELECT 'XL' UNION ALL SELECT '2XL' UNION ALL SELECT '3XL'
+            UNION ALL SELECT '4XL' UNION ALL SELECT '5XL') s;
 
 INSERT INTO seed_product (id, product_code, name, category_id) VALUES
   ('seed-prd-01', 'KPR-B28-2503',   'Koper bagasi 28" mar 2025',        'seed-cat-koper'),
@@ -62,8 +81,6 @@ INSERT INTO seed_product (id, product_code, name, category_id) VALUES
   ('seed-prd-13', 'SYL-3C-TFL',     'Syal 3 color typeface + logo',     'seed-cat-syal'),
   ('seed-prd-14', 'BTK-KTN',        'Batik katun',                      'seed-cat-batik'),
   ('seed-prd-15', 'BTK-PRT-SPX',    'Batik printing 1 side spandex',    'seed-cat-batik'),
-  ('seed-prd-16', 'SRG-2610-P',     'Seragam okt 2026 P (XS-5XL)',      'seed-cat-seragam'),
-  ('seed-prd-17', 'SRG-2610-L',     'Seragam okt 2026 L (XS-5XL)',      'seed-cat-seragam'),
   ('seed-prd-18', 'MKN-BLK',        'Mukena BLACK FULL',                'seed-cat-busana'),
   ('seed-prd-19', 'KRD-BLK',        'Kerudung BLACK FULL',              'seed-cat-busana'),
   ('seed-prd-20', 'IHR-REG',        'Ihrom ALL SIZE REGULAR',           'seed-cat-ihrom'),
@@ -73,11 +90,11 @@ INSERT INTO seed_product (id, product_code, name, category_id) VALUES
 
 -- flag values mirror the defaults of the Product domain class
 INSERT IGNORE INTO product
-  (id, version, date_created, last_updated, name, product_code, category_id, product_type_id,
-   unit_of_measure, package_size, created_by_id, updated_by_id,
+  (id, version, date_created, last_updated, name, product_code, category_id, product_family_id,
+   product_type_id, unit_of_measure, package_size, created_by_id, updated_by_id,
    active, essential, lot_control, lot_and_expiry_control,
    cold_chain, controlled_substance, hazardous_material, serialized, reconditioned)
-SELECT id, 0, @now, @now, name, product_code, category_id, 'DEFAULT',
+SELECT id, 0, @now, @now, name, product_code, category_id, family_id, 'DEFAULT',
        'pcs', 1, @admin, @admin,
        1, 1, 1, 0,
        0, 0, 0, 0, 0
